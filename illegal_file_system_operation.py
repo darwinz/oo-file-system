@@ -1,0 +1,2 @@
+class IllegalFileSystemOperation(Exception):
+    pass
