@@ -1,4 +1,3 @@
-from functools import reduce
 from typing import Dict, List
 
 from helpers import file_path
@@ -32,7 +31,7 @@ class FileSystemNode:
         self.name: str = name if isinstance(name, str) else None
         self.path: str = path if isinstance(path, str) else None
         self.size: int = size if isinstance(size, int) else None
-        if None in [type, name, path, size]:
+        if None in [self.type, self.name, self.path, self.size]:
             raise Exception(f'Incorrect value passed')
 
     def set_size(self):
@@ -99,7 +98,7 @@ class Folder(FileSystemNode, FSEntityContainerNode, FSEntityContainableNode):
 class TextFile(FileSystemNode, FSEntityContainableNode):
     def __init__(self, type: str, name: str, parent: FileSystemNode):
         """
-        Initialize a Folder instance
+        Initialize a TextFile instance
         :param type: int - The ID of the file system node type from the entity types enum
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemNode - Parent file system node (entity)
@@ -114,7 +113,7 @@ class TextFile(FileSystemNode, FSEntityContainableNode):
 class ZipFile(FileSystemNode, FSEntityContainerNode, FSEntityContainableNode):
     def __init__(self, type: str, name: str, parent: FileSystemNode):
         """
-        Initialize a Folder instance
+        Initialize a ZipFile instance
         :param type: int - The ID of the file system node type from the entity types enum
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemNode - Parent file system node (entity)

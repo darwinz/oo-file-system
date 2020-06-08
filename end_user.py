@@ -10,13 +10,14 @@ from helpers import SEPARATOR
 file_system = FileSystem()
 
 
-def print_file_system(node: FileSystemNode, level: int = 1):
-    print('| --- '*level + ' ', end='')
-    print(f'{node.name} ({node.size}) |')
+def pprint_tree(node: FileSystemNode, file: str = None, _prefix: str = "", _last: bool = True):
+    print(_prefix, "- " if _last else "|- ", f"{node.name} ({node.size})", sep="", file=file)
+    _prefix += "   " if _last else "|  "
     if hasattr(node, 'children'):
-        for child in node.children.values():
-            print_file_system(child, level+1)
-            print('', end='')
+        child_count = len(node.children)
+        for i, child in enumerate(node.children.values()):
+            _last = i == (child_count - 1)
+            pprint_tree(child, file, _prefix, _last)
 
 
 if __name__ == "__main__":
@@ -29,14 +30,14 @@ if __name__ == "__main__":
 
     print('===============================')
     print('Printing the file system tree (with size)')
-    print_file_system(file_system.drives[MAIN_DRIVE])
+    pprint_tree(file_system.drives[MAIN_DRIVE])
     print('===============================')
 
     moved_file = file_system.move(text_file.path, f'{MAIN_DRIVE}{SEPARATOR}my_folder2{SEPARATOR}my_moved_txt_file')
 
     print('===============================')
     print('File system tree (with size) after my_folder/my_txt_file moved to my_folder2/my_moved_txt_file')
-    print_file_system(file_system.drives[MAIN_DRIVE])
+    pprint_tree(file_system.drives[MAIN_DRIVE])
     print('===============================')
 
     text_file2 = file_system.create(EntityTypes.TEXT_FILE.value, 'my_txt_file2', f'{MAIN_DRIVE}{SEPARATOR}my_folder')
@@ -53,5 +54,5 @@ if __name__ == "__main__":
     print('===============================')
     print('===============================')
     print('File system tree (with size) after content added to two files')
-    print_file_system(file_system.drives[MAIN_DRIVE])
+    pprint_tree(file_system.drives[MAIN_DRIVE])
     print('===============================')

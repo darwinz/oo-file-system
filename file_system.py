@@ -55,6 +55,12 @@ class FileSystem:
         return new_entity
 
     def delete(self, path: str) -> bool:
+        """
+        Deletes a file system node (entity)
+        :param path: str - Path of the parent file system node (entity)
+        :return: FileSystemNode
+        :raises FileNotFoundError, FileExistsError, IllegalFileSystemOperation
+        """
         path = rf'{path}'
         parent_path, name = self.get_parent_path_and_name(path)
         parent_node = self.find_node_by_path(parent_path)
@@ -81,6 +87,11 @@ class FileSystem:
             raise FileExistsError(errno.EEXIST, os.strerror(errno.EEXIST), dest_path)
 
         new_entity = self.create(source_node.type, dest_name, dest_parent_path)
+        if hasattr(source_node, 'children'):
+            new_entity.children = source_node.children
+        if hasattr(source_node, 'content'):
+            new_entity.content = source_node.content
+
         self.delete(source_path)
         return new_entity
 
