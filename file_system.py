@@ -1,14 +1,14 @@
+import enum
 import errno
 import os
+from pathlib import Path
 from typing import List, Dict
 
 from entity_types_enum import EntityTypes
-from helpers import file_path, SEPARATOR, recursive_size_update
-from file_system_entities import FileSystemNode, Drive, Folder, TextFile, ZipFile
+from helpers import file_path, recursive_size_update, MAIN_DRIVE
+from file_system_entities import FileSystemEntity, Drive, Folder, TextFile, ZipFile
 from illegal_file_system_operation import IllegalFileSystemOperation
 from not_a_text_file_error import NotATextFileError
-
-MAIN_DRIVE = 'C:'
 
 
 class FileSystem:
@@ -16,20 +16,20 @@ class FileSystem:
         """
         Initialize the File System instance
         """
-        self.drives: Dict[str, FileSystemNode] = {
-            MAIN_DRIVE: Drive(EntityTypes.DRIVE.value, MAIN_DRIVE)
+        self.drives: Dict[str, FileSystemEntity] = {
+            MAIN_DRIVE: Drive(EntityTypes.DRIVE, MAIN_DRIVE)
         }
 
-    def create(self, type: int, name: str, parent_path: str) -> FileSystemNode:
+    def create(self, type: enum.Enum, name: str, parent_path: str) -> FileSystemEntity:
         """
         Creates a file system node (entity)
-        :param type: int - The ID of the file system node type from the entity types enum
+        :param type: enum.Enum - The ID of the file system node type from the entity types enum
         :param name: str - The name of the file system node (entity)
         :param parent_path: str - Path of the parent file system node (entity)
-        :return: FileSystemNode
+        :return: FileSystemEntity
         :raises FileNotFoundError, FileExistsError, IllegalFileSystemOperation
         """
-        parent_path = rf'{parent_path}' if parent_path else None
+        parent_path = parent_path if parent_path else None
         new_entity = None
         # Find the parent node from the parent path string
         parent_node = self.find_node_by_path(parent_path)
@@ -42,38 +42,44 @@ class FileSystem:
             raise FileExistsError(errno.EEXIST, os.strerror(errno.EEXIST), file_path(parent_node.path, name))
 
         try:
-            if type == EntityTypes.FOLDER.value:
-                new_entity = Folder(EntityTypes.FOLDER.value, name, parent_node)
-            elif type == EntityTypes.TEXT_FILE.value:
-                new_entity = TextFile(EntityTypes.TEXT_FILE.value, name, parent_node)
-            elif type == EntityTypes.ZIP_FILE.value:
-                new_entity = ZipFile(EntityTypes.ZIP_FILE.value, name, parent_node)
+            if type == EntityTypes.FOLDER:
+                new_entity = Folder(EntityTypes.FOLDER, name, parent_node)
+            elif type == EntityTypes.TEXT_FILE:
+                new_entity = TextFile(EntityTypes.TEXT_FILE, name, parent_node)
+            elif type == EntityTypes.ZIP_FILE:
+                new_entity = ZipFile(EntityTypes.ZIP_FILE, name, parent_node)
             self.insert_node(new_entity, parent_node)
         except IllegalFileSystemOperation:
             print('There was a problem creating the entity')
 
+        recursive_size_update(new_entity)
         return new_entity
 
     def delete(self, path: str) -> bool:
-        path = rf'{path}'
+        """
+        Deletes a file system node (entity)
+        :param path: str - Path of the parent file system node (entity)
+        :return: bool
+        :raises FileNotFoundError, FileExistsError, IllegalFileSystemOperation
+        """
         parent_path, name = self.get_parent_path_and_name(path)
         parent_node = self.find_node_by_path(parent_path)
         if parent_node and hasattr(parent_node, 'children'):
             if name in parent_node.children and parent_node.children[name]:
                 del parent_node.children[name]
+                recursive_size_update(parent_node)
                 return True
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-    def move(self, source_path: str, dest_path: str) -> FileSystemNode:
-        source_path = rf'{source_path}'
-        dest_path = rf'{dest_path}'
+    def move(self, source_path: str, dest_path: str) -> FileSystemEntity:
         # Get the destination parent path and the destination name
         dest_parent_path, dest_name = self.get_parent_path_and_name(dest_path)
         source_node = self.find_node_by_path(source_path)
+        source_parent = source_node.parent
         dest_parent_node = self.find_node_by_path(dest_parent_path)
 
-        # If the parent path doesn't exist
-        if not source_node or not dest_parent_node:
+        # If the source node or parent path doesn't exist, or moving entity into itself
+        if not source_node or not dest_parent_node or dest_parent_node == source_node:
             missing_path = source_path if not source_node else dest_path
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), missing_path)
         # If destination path already exists
@@ -81,11 +87,17 @@ class FileSystem:
             raise FileExistsError(errno.EEXIST, os.strerror(errno.EEXIST), dest_path)
 
         new_entity = self.create(source_node.type, dest_name, dest_parent_path)
+        if hasattr(source_node, 'children'):
+            new_entity.children = source_node.children
+        if hasattr(source_node, 'content'):
+            new_entity.content = source_node.content
+
+        recursive_size_update(new_entity)
         self.delete(source_path)
+        recursive_size_update(source_parent)
         return new_entity
 
     def write_to_file(self, path: str, content: str) -> TextFile:
-        path = rf'{path}'
         file_entity = self.find_node_by_path(path)
         # If the file system entity is not found
         if not file_entity:
@@ -110,19 +122,17 @@ class FileSystem:
     def get_parent_path_and_name(full_path: str):
         if not full_path:
             return None, None
-        path_parts = full_path.split(SEPARATOR)
-        # The name of the entity is the last part
-        name = path_parts[-1]
-        # Combine the path parts except the name to get the parent path
-        parent_path = rf'{SEPARATOR}'.join(path_parts[:-1])
+        path = Path(full_path)
+        parent_path = path.parent
+        name = path.parts[-1]
         return parent_path, name
 
     @staticmethod
-    def insert_node(entity: FileSystemNode, parent_node: FileSystemNode) -> None:
+    def insert_node(entity: FileSystemEntity, parent_node: FileSystemEntity) -> None:
         """
         Insert a node entity as a child of parent_node
-        :param entity: FileSystemNode - The node entity to be inserted
-        :param parent_node: FileSystemNode - The node entity to receive a new child
+        :param entity: FileSystemEntity - The node entity to be inserted
+        :param parent_node: FileSystemEntity - The node entity to receive a new child
         """
         if not hasattr(parent_node, 'children'):
             raise IllegalFileSystemOperation('Parent cannot contain any other entity')
@@ -130,33 +140,40 @@ class FileSystem:
         if entity.name in parent_node.children:
             raise FileExistsError(errno.EEXIST, os.strerror(errno.EEXIST), file_path(parent_node.path, entity.name))
 
-        parent_node.children[entity.name] = entity
+        parent_node.add_child(entity)
 
     def find_node_by_path(self, path: str):
         """
         Find the parent node based on its file path
         :param path: str - The full path of the node (entity) to be located
-        :return: FileSystemNode - The file system node (entity)
+        :return: FileSystemEntity - The file system node (entity)
         """
-        path = rf'{path}' if path else None
-        path_parts = path.split(SEPARATOR)
-        return self.find_descendant_node(self.drives[MAIN_DRIVE], path_parts, path)
+        path = Path(path)
+        return self.find_descendant_node(self.drives[MAIN_DRIVE], path.parts, str(path))
 
-    def find_descendant_node(self, node: FileSystemNode, path_parts: List[str], path: str):
+    def find_descendant_node(self, node: FileSystemEntity, path_parts: List[str], path: str, current_index: int = 1):
         """
         Recursively traverse children of a file system node to find a given node by path
-        :param node: FileSystemNode - The file system node (entity) to be searched
+        :param node: FileSystemEntity - The file system node (entity) to be searched
         :param path_parts: List[str] - The list of path parts (found by splitting full path by the SEPARATOR)
         :param path: str - The full path of the node (entity) to be located
-        :return: FileSystemNode - The file system node (entity)
+        :param current_index: int - the index of the path list in the current iteration
+        :return: FileSystemEntity - The file system node (entity)
         """
-        if rf'{node.path}' == path:
+        if node.path == path:
             return node
         if hasattr(node, 'children'):
             # Get the first file path part from the list, leaving the remaining non-traversed file path parts
-            next_path = path_parts[1]
+            path_obj = Path(path)
+            current_iteration_path = '/'.join(path_obj.parts[0:current_index + 1]).replace('//', '/')
+            if current_iteration_path == node.path:
+                current_index += 1
+
+            # if path_obj.parts[current_index] == Path(node.path).parts[-1]:
+            #     current_index += 1
+            next_path = path_obj.parts[current_index]
             next_node = node.children.get(next_path)
             if not next_node:
                 return None
-            return self.find_descendant_node(next_node, path_parts[1:], path)
+            return self.find_descendant_node(next_node, path_parts[1:], path, current_index)
         return None
