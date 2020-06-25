@@ -25,7 +25,7 @@ class FileSystemEntity:
         raise NotImplementedError
 
 
-class FSEntityContainableNode:
+class ContainableMixin:
     def __init__(self, parent: FileSystemEntity):
         """
         A shared, inheritable class for file system nodes (entities) that can be contained by other nodes
@@ -34,7 +34,7 @@ class FSEntityContainableNode:
         self.parent: FileSystemEntity = parent
 
 
-class FSEntityContainerNode:
+class ContainerMixin:
     def __init__(self):
         """
         A shared, inheritable class for file system nodes (entities) that can contain other nodes
@@ -49,7 +49,7 @@ class FSEntityContainerNode:
         self.children[child.name] = child
 
 
-class Drive(FileSystemEntity, FSEntityContainerNode):
+class Drive(FileSystemEntity, ContainerMixin):
     def __init__(self, type: enum.Enum, name: str):
         """
         Initialize a Drive instance
@@ -57,7 +57,7 @@ class Drive(FileSystemEntity, FSEntityContainerNode):
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemEntity - Parent file system node (entity)
         """
-        FSEntityContainerNode.__init__(self)
+        ContainerMixin.__init__(self)
         size = calc_size(self.children)
         super().__init__(type, name, name, size)
 
@@ -65,7 +65,7 @@ class Drive(FileSystemEntity, FSEntityContainerNode):
         self.size = calc_size(self.children)
 
 
-class Folder(FileSystemEntity, FSEntityContainerNode, FSEntityContainableNode):
+class Folder(FileSystemEntity, ContainerMixin, ContainableMixin):
     def __init__(self, type: enum.Enum, name: str, parent: FileSystemEntity):
         """
         Initialize a Folder instance
@@ -73,8 +73,8 @@ class Folder(FileSystemEntity, FSEntityContainerNode, FSEntityContainableNode):
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemEntity - Parent file system node (entity)
         """
-        FSEntityContainerNode.__init__(self)
-        FSEntityContainableNode.__init__(self, parent)
+        ContainerMixin.__init__(self)
+        ContainableMixin.__init__(self, parent)
         size = calc_size(self.children)
         super().__init__(type, name, file_path(parent.path, name), size)
 
@@ -82,7 +82,7 @@ class Folder(FileSystemEntity, FSEntityContainerNode, FSEntityContainableNode):
         self.size = calc_size(self.children)
 
 
-class TextFile(FileSystemEntity, FSEntityContainableNode):
+class TextFile(FileSystemEntity, ContainableMixin):
     def __init__(self, type: enum.Enum, name: str, parent: FileSystemEntity, content: str = ''):
         """
         Initialize a TextFile instance
@@ -90,7 +90,7 @@ class TextFile(FileSystemEntity, FSEntityContainableNode):
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemEntity - Parent file system node (entity)
         """
-        FSEntityContainableNode.__init__(self, parent)
+        ContainableMixin.__init__(self, parent)
         super().__init__(type, name, file_path(parent.path, name), 0)
         self.content = content
 
@@ -98,7 +98,7 @@ class TextFile(FileSystemEntity, FSEntityContainableNode):
         self.size = len(self.content)
 
 
-class ZipFile(FileSystemEntity, FSEntityContainerNode, FSEntityContainableNode):
+class ZipFile(FileSystemEntity, ContainerMixin, ContainableMixin):
     def __init__(self, type: enum.Enum, name: str, parent: FileSystemEntity):
         """
         Initialize a ZipFile instance
@@ -106,8 +106,8 @@ class ZipFile(FileSystemEntity, FSEntityContainerNode, FSEntityContainableNode):
         :param name: str - The name of the file system node (entity)
         :param parent: FileSystemEntity - Parent file system node (entity)
         """
-        FSEntityContainerNode.__init__(self)
-        FSEntityContainableNode.__init__(self, parent)
+        ContainerMixin.__init__(self)
+        ContainableMixin.__init__(self, parent)
         size = int(round(calc_size(self.children) / 2))
         super().__init__(type, name, file_path(rf'{parent.path}', name), int(round(size)))
 
