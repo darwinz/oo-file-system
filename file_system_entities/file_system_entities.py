@@ -9,12 +9,12 @@ class FileSystemEntity:
         """
         :param type: enum.Enum - The ID of the file system node type from the entity types enum
         :param name: str - The name of the file system node (entity)
-        :param path: str - The concatenation of the names of the containing entities, from the drive
+        :param path: str - The concatenation of the names of the containing file_system_entities, from the drive
                 down to and including the entity.  The names are separated by '\'
         :param size: int - An integer defined as follows:
                 * For a text file - it is the length of its contents
-                * For a drive or folder, it is the sum of all sizes of the entities it contains
-                * For a zip file, it is one half of the sum of all sizes of the entities it contains
+                * For a drive or folder, it is the sum of all sizes of the file_system_entities it contains
+                * For a zip file, it is one half of the sum of all sizes of the file_system_entities it contains
         """
         self.type: enum.Enum = type
         self.name: str = name
@@ -28,7 +28,7 @@ class FileSystemEntity:
 class ContainableMixin:
     def __init__(self, parent: FileSystemEntity):
         """
-        A shared, inheritable class for file system nodes (entities) that can be contained by other nodes
+        A shared, inheritable class for file system nodes (file_system_entities) that can be contained by other nodes
         :param parent: FileSystemEntity - Parent file system node (entity)
         """
         self.parent: FileSystemEntity = parent
@@ -37,7 +37,7 @@ class ContainableMixin:
 class ContainerMixin:
     def __init__(self):
         """
-        A shared, inheritable class for file system nodes (entities) that can contain other nodes
+        A shared, inheritable class for file system nodes (file_system_entities) that can contain other nodes
         """
         self.children: Dict[str, FileSystemEntity] = {}
 

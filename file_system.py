@@ -4,10 +4,10 @@ import os
 from pathlib import Path
 from typing import List, Dict
 
-from entity_factory import FileSystemEntityFactory
-from entity_types_enum import EntityTypes
+from file_system_entities.entity_factory import FileSystemEntityFactory
+from file_system_entities.entity_types_enum import EntityTypes
 from helpers import file_path, recursive_size_update, MAIN_DRIVE
-from file_system_entities import FileSystemEntity, Drive, TextFile
+from file_system_entities.file_system_entities import FileSystemEntity, Drive, TextFile
 from illegal_file_system_operation import IllegalFileSystemOperation
 from not_a_text_file_error import NotATextFileError
 
