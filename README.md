@@ -1,5 +1,7 @@
 # Object-oriented file system
 
+![Actions Status](https://github.com/darwinz/oo-file-system/workflows/GitHub%20Actions/badge.svg)
+
 An object-oriented file-system developed in Python
 
 ### File system design
