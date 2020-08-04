@@ -3,9 +3,9 @@ This is a helper module that can assist with interaction with the File System
 """
 import os
 
-from entity_types_enum import EntityTypes
+from file_system_entities.entity_types_enum import EntityTypes
 from file_system import FileSystem, MAIN_DRIVE
-from file_system_entities import FileSystemEntity
+from file_system_entities.file_system_entities import FileSystemEntity
 
 file_system = FileSystem()
 

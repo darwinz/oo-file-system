@@ -1,7 +1,7 @@
 import enum
 
-from entity_types_enum import EntityTypes
-from file_system_entities import Folder, TextFile, ZipFile
+from file_system_entities.entity_types_enum import EntityTypes
+from file_system_entities.file_system_entities import Folder, TextFile, ZipFile
 
 
 class FileSystemEntityFactory:
