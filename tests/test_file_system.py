@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from entity_types_enum import EntityTypes
+from file_system_entities.entity_types_enum import EntityTypes
 from file_system import FileSystem
 from helpers import MAIN_DRIVE
 
