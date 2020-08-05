@@ -23,7 +23,7 @@ If entity A contains entity B then we say that A is the parent of B
 Every entity has the following properties:
 * Type – The type of the entity (one of the 4 types above)
 * Name - An alphanumeric string. Two entities with the same parent cannot have the same name. Similarly, two drives cannot have the same name
-* Path – The concatenation of the names of the containing entities, from the drive down to and including the entity. The names are separated by ‘\’
+* Path – The concatenation of the names of the containing entities, from the drive down to and including the entity
 * A text file has a property called Content which is a string
 * Size – an integer defined as follows:
     * For a text file – it is the length of its content
