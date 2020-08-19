@@ -1,2 +1,4 @@
 .idea
 **/**pycache**
+.python-version
+**/**.pyc
